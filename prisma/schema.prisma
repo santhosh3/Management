@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String
+  roleId    String
+  users     User[]
+  code      String?  @unique()
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique()
+  password       String
+  image          String?
+  code           String?         @unique()
+  role           Role            @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  roleId         Int
+  isDeleted      Boolean         @default(false)
+  board          Board[]
+  list           List[]
+  card           Cards[]         @relation("user")
+  createdBy      Cards[]         @relation("createdBy")
+  closedBy       Cards[]         @relation("closedBy")
+  assignedTo     Cards[]         @relation("assignedTo")
+  assignedBy     Cards[]         @relation("assignedBy")
+  finishedBy     Cards[]         @relation("finishedBy")
+  createdAt      DateTime        @default(now())
+  BoardsInvolved UsersOnBoards[]
+  updatedAt      DateTime        @updatedAt
+}
+
+model UsersOnBoards {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  board      Board    @relation(fields: [boardId], references: [id])
+  boardId    Int
+  assignedAt DateTime @default(now())
+  @@id([userId, boardId])
+}
+
+model Board {
+  id             Int             @id @default(autoincrement())
+  name           String
+  image          String?
+  user           User            @relation(fields: [userId], references: [id])
+  userId         Int
+  code           String?         @unique()
+  list           List[]
+  isDeleted      Boolean         @default(false)
+  peopleInvolved UsersOnBoards[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model List {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  boardId   Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  code      String?  @unique()
+  card      Cards[]
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cards {
+  id           Int       @id @default(autoincrement())
+  name         String?
+  List         List      @relation(fields: [listId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  listId       Int
+  user         User      @relation("user", fields: [userId], references: [id])
+  userId       Int
+  description  String?
+  image        String?
+  code         String?   @unique()
+  createdById  Int?
+  createdBy    User?     @relation("createdBy", fields: [createdById], references: [id])
+  closedById   Int?
+  closedBy     User?     @relation("closedBy", fields: [closedById], references: [id])
+  assignedById Int?
+  assignedBy   User?     @relation("assignedBy", fields: [assignedById], references: [id])
+  finishedById Int?
+  finishedBy   User?     @relation("finishedBy", fields: [finishedById], references: [id])
+  assignedToId Int?
+  assignedTo   User?     @relation("assignedTo", fields: [assignedToId], references: [id])
+  issueType    Int?
+  priority     Int?
+  startDate    DateTime?
+  endDate      DateTime?
+  isDeleted    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}

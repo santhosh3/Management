@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  nestjs-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    depends_on:
+      - pgsql
+    environment:
+      - PORT=3002
+      - NODE_ENV=development
+    volumes:
+      - ./:/app
+      - /app/node_modules
+
+  pgsql:
+    image: postgres:10.4-alpine
+    container_name:  PostgreSQL
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+    ports:
+      - 5431:5432
+
+volumes:
+  pgsql-data:

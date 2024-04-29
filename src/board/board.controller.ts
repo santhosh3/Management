@@ -22,15 +22,47 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
 import { ListService } from 'src/list/list.service';
+import { ConfigService } from '@nestjs/config';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @SkipThrottle()
+@ApiTags('Board')
+@ApiBearerAuth('token')
 @Controller('board')
 export class BoardController {
-  constructor(private readonly boardService: BoardService,
-              private readonly listService: ListService) {}
+  constructor(
+    private readonly boardService: BoardService,
+    private readonly listService: ListService,
+    private configService: ConfigService,
+  ) {}
   private readonly logger = new MyLoggerService(BoardController.name);
 
   @UseGuards(AuthenticationGuard)
+  @ApiOperation({ summary: 'create new Project' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          example: 'nestJS',
+          description: 'this is name of project',
+        },
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'this is image for project',
+        },
+      },
+    },
+  })
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
@@ -44,30 +76,37 @@ export class BoardController {
       }),
     }),
   )
-  create(
-    @Req() {user},
+  async create(
+    @Req() { user },
     @UploadedFile() file: Express.Multer.File,
     @Body() createBoardDto: Prisma.BoardCreateInput,
   ) {
-    let object = {
+    const object = {
       ...createBoardDto,
       userId: user.id,
     };
-    if (file) {
-      let createBoard = this.boardService.create(file.filename, object);
-      return createBoard
-    }
-    return this.boardService.create(null, object);
+    const host: string = this.configService.get('host');
+    const port: string = this.configService.get('port');
+    const filename = file ? file.filename : null;
+    const createBoard = await this.boardService.create(filename, object, host, port);
+    return createBoard;
   }
 
+  @ApiOperation({ summary: 'get All Projects' })
   @UseGuards(AuthenticationGuard)
   @Get()
-  findAll(@Req() {user},@Ip() ip: string) {
-    //this.logger.log(`Request for All Boards\t${ip}`, BoardController.name);
-    return this.boardService.findAll();
+  findAll(@Req() { user }, @Ip() ip: string) {
+    return this.boardService.findAll(user.id);
   }
 
+  @ApiOperation({ summary: 'get projects for login User' })
+  @UseGuards(AuthenticationGuard)
+  @Get('/user')
+  findLoginUserProjects(@Req() { user }, @Ip() ip: string) {
+    return this.boardService.findById(user.id);
+  }
 
+  @ApiOperation({ summary: 'get Project by ID' })
   @Get(':id')
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.boardService.findById(id);
@@ -87,4 +126,4 @@ export class BoardController {
   }
 }
 
-// @Throttle({short:{ttl :1000, limit:1}})
+//this.logger.log(`Request for All Boards\t${ip}`, BoardController.name);

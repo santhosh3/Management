@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { RoleService } from './role.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+
+@ApiTags('role')
+@ApiBearerAuth('token')
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}

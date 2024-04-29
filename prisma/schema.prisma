@@ -32,6 +32,7 @@ model User {
   roleId         Int
   isDeleted      Boolean         @default(false)
   board          Board[]
+  effort         Effort[]
   list           List[]
   card           Cards[]         @relation("user")
   createdBy      Cards[]         @relation("createdBy")
@@ -39,6 +40,11 @@ model User {
   assignedTo     Cards[]         @relation("assignedTo")
   assignedBy     Cards[]         @relation("assignedBy")
   finishedBy     Cards[]         @relation("finishedBy")
+  taskcreatedBy  Tasks[]         @relation("createdBy")
+  taskassignedTo Tasks[]         @relation("assignedTo")
+  taskfinishedBy Tasks[]         @relation("finishedBy")
+  taskassignedBy Tasks[]         @relation("assignedBy")
+  taskclosedBy   Tasks[]         @relation("closedBy")
   createdAt      DateTime        @default(now())
   BoardsInvolved UsersOnBoards[]
   updatedAt      DateTime        @updatedAt
@@ -50,6 +56,7 @@ model UsersOnBoards {
   board      Board    @relation(fields: [boardId], references: [id])
   boardId    Int
   assignedAt DateTime @default(now())
+
   @@id([userId, boardId])
 }
 
@@ -105,7 +112,49 @@ model Cards {
   priority     Int?
   startDate    DateTime?
   endDate      DateTime?
+  task         Tasks[]
   isDeleted    Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model Tasks {
+  id            Int      @id @default(autoincrement())
+  name          String?
+  Card          Cards    @relation(fields: [cardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cardId        Int
+  createdById   Int?
+  createdBy     User?    @relation("createdBy", fields: [createdById], references: [id])
+  assignedToId  Int?
+  assignedTo    User?    @relation("assignedTo", fields: [assignedToId], references: [id])
+  finishedById  Int?
+  finishedBy    User?    @relation("finishedBy", fields: [finishedById], references: [id])
+  estimatedTime Int?
+  closedById    Int?
+  closedBy      User?    @relation("closedBy", fields: [closedById], references: [id])
+  assignedById  Int?
+  assignedBy    User?    @relation("assignedBy", fields: [assignedById], references: [id])
+  description   String?
+  image         String?
+  code          String?  @unique()
+  effort        Effort[]
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Effort {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  Task        Tasks     @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  taskId      Int
+  costTime    Int?
+  effortType  String?
+  description String?
+  code        String?   @unique()
+  isDeleted   Boolean   @default(false)
+  workedDate  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

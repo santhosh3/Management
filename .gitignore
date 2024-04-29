@@ -2,6 +2,8 @@
 /dist
 /node_modules
 /build
+/src/uploads
+/prisma/migrations
 
 # Logs
 logs
@@ -27,6 +29,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+yarn.lock
 
 # IDE - VSCode
 .vscode/*

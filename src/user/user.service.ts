@@ -1,75 +1,73 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { Prisma } from '@prisma/client';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(file: string, createUserDto: Prisma.UserCreateInput) {
+  async create(file: string, createUserDto: Prisma.UserCreateInput, host:string, port:string) {
     let fields = {
       id: true,
       name: true,
       email: true,
-      password: true,
       image: true,
       role: true,
       code: true,
       createdAt: true,
       updatedAt: true,
-    };
-    if (file === null) {
-      return await this.databaseService.user.create({
-        data: {
-          ...createUserDto,
-          password: await argon2.hash(createUserDto.password),
+      BoardsInvolved: {
+        select: {
+          board: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
-        select: fields,
-      });
-    }
+      },
+    };
+
     return await this.databaseService.user.create({
       data: {
         ...createUserDto,
-        password: await argon2.hash(createUserDto.password),
-        image: `http://localhost:3002/${file}`,
+        password: await bcrypt.hash(createUserDto.password, 10),
+        image: file !== null ? `http://${host}:${port}/${file}` : null,
       },
       select: fields,
     });
   }
 
   async findAll() {
-    let fields = {
-      id: true,
-      name: true,
-      email: true,
-      password: true,
-      image: true,
-      role: true,
-      code: true,
-      createdAt: true,
-      updatedAt: true,
-    };
     return await this.databaseService.user.findMany({
       where: {
         isDeleted: false,
       },
-      select: fields
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        code: true,
+        createdAt: true,
+        updatedAt: true,
+        BoardsInvolved: {
+          select: {
+            board: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
   async getById(id: number) {
-    let fields = {
-      id: true,
-      name: true,
-      email: true,
-      password: true,
-      image: true,
-      role: true,
-      code: true,
-      createdAt: true,
-      updatedAt: true,
-    };
     return await this.databaseService.user.findUnique({
       where: {
         id,
@@ -80,12 +78,12 @@ export class UserService {
           select: {
             board: {
               select: {
-                id : true,
-                name : true
-              }
-            }
-          }
-        }
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -94,6 +92,8 @@ export class UserService {
     id: number,
     updateUserDto: Prisma.UserUpdateInput,
     file: string,
+    host: string,
+    port: string
   ) {
     let fields = {
       id: true,
@@ -105,32 +105,29 @@ export class UserService {
       code: true,
       createdAt: true,
       updatedAt: true,
+      BoardsInvolved: {
+        select: { board: { select: { id: true, name: true } } },
+      },
     };
-    if (file === null) {
-      return await this.databaseService.user.update({
-        where: {
-          id,
-        },
-        data: updateUserDto,
-        select: fields,
-      });
-    }
     return await this.databaseService.user.update({
       where: {
         id,
         isDeleted: false,
       },
-      data: { ...updateUserDto, image: `http://localhost:3002/${file}` },
+      data: {
+        ...updateUserDto,
+        image: file !== null ? `http://${host}:${port}/${file}` : null,
+      },
       select: fields,
     });
   }
 
   async deleteById(id: number) {
     await this.databaseService.usersOnBoards.deleteMany({
-      where : {
-        userId : id
-      }
-    })
+      where: {
+        userId: id,
+      },
+    });
     return await this.databaseService.user.update({
       where: {
         id,
@@ -177,19 +174,31 @@ export class UserService {
             })),
           },
         },
-        select: { BoardsInvolved: { select: { board : {select : {id : true, name: true}} } } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          code: true,
+          createdAt: true,
+          updatedAt: true,
+          BoardsInvolved: {
+            select: { board: { select: { id: true, name: true } } },
+          },
+        },
       });
       return {
-        status : 200,
-        message : "success",
-        data : involved
-      }
+        status: 200,
+        message: 'success',
+        data: involved,
+      };
     } catch (error) {
       return {
-        status : 500,
-        message : "error",
-        data : error
-      }
+        status: 500,
+        message: 'error',
+        data: error,
+      };
     }
   }
 }

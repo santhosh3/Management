@@ -17,10 +17,14 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { UserService } from './user.service';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
+@ApiTags('User')
+@ApiBearerAuth('token')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService, private configService: ConfigService) {}
 
   @UseGuards(AuthenticationGuard)
   @Post()
@@ -41,10 +45,10 @@ export class UserController {
     @Body() createUserDto: Prisma.UserCreateInput,
   ) {
     let object = { ...createUserDto, roleId: Number(createUserDto['roleId']) };
-    if (file) {
-      return this.userService.create(file.filename, object);
-    }
-    return this.userService.create(null, object);
+    const filename = file ? file.filename : null;
+    const host = this.configService.get('host');
+    const port = this.configService.get('port');
+    return this.userService.create(filename, object, host, port);  
   }
 
   @Get()
@@ -75,11 +79,11 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: Prisma.UserUpdateInput,
   ) {
+    const port = this.configService.get('port');
+    const host = this.configService.get('host');
+    const filename = file ? file.filename : null;
     let object = { ...updateUserDto, roleId: Number(updateUserDto['roleId']) };
-    if (file) {
-      return this.userService.updateById(id, object, file.filename);
-    }
-    return this.userService.updateById(id, object, null);
+    return this.userService.updateById(id, object, filename, host, port);
   }
 
   @Delete(':id')

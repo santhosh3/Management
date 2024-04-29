@@ -11,35 +11,23 @@ import { DatabaseService } from 'src/database/database.service';
 export class BoardService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(file: string, createBoardDto: Prisma.BoardCreateInput) {
+  async create(
+    file: string,
+    createBoardDto: Prisma.BoardCreateInput,
+    host: string,
+    port: string,
+  ) {
     const insertedData = {
       name: createBoardDto['name'],
       userId: createBoardDto['userId'],
-      // peopleInvolved: {
-      //   create: createBoardDto['userIds'].map((Id: any) => ({
-      //     user: { connect: { id: Number(Id) } },
-      //   })),
-      // },
     };
-    if (file === null) {
-      return await this.databaseService.board.create({
-        data: { ...insertedData },
-      });
-    }
-    return await this.databaseService.board.create({
-      data: { ...insertedData, image: `http://localhost:3002/${file}` },
-    });
-  }
-
-  async findAll() {
-    return await this.databaseService.board.findMany({
-      where: {
-        isDeleted: false,
-        // peopleInvolved : {
-        //   some : {
-        //     userId : 1
-        //   }
-        // }
+    const AddProjectToUser: any = {
+      userIds: [createBoardDto['userId']],
+    };
+    const createBoard = await this.databaseService.board.create({
+      data: {
+        ...insertedData,
+        image: file === null ? null : `http://${host}:${port}/${file}`,
       },
       select: {
         id: true,
@@ -47,44 +35,62 @@ export class BoardService {
         image: true,
         createdAt: true,
         updatedAt: true,
-        // peopleInvolved: {
-        //   select: {
-        //     user: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         BoardsInvolved: true,
-        //       },
-        //     },
-        //   },
-        // },
-        // list: {
-        //   where: {
-        //     isDeleted: false,
-        //   },
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //     createdAt: true,
-        //     updatedAt: true,
-        //     card: {
-        //       where: {
-        //         isDeleted: false,
-        //       },
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         description: true,
-        //         image: true,
-        //         code: true,
-        //         createdAt: true,
-        //         updatedAt: true,
-        //       },
-        //     },
-        //   },
-        // },
       },
     });
+    await this.updateById(createBoard.id, AddProjectToUser);
+    return createBoard;
+  }
+
+  async findAll(id: number) {
+    let query: any;
+    let field = {
+      id: true,
+      name: true,
+      image: true,
+      // peopleInvolved: {
+      //   select: {
+      //     user: {
+      //       select: {
+      //         id: true,
+      //         name: true,
+      //       },
+      //     },
+      //   },
+      // },
+      createdAt: true,
+      updatedAt: true,
+    };
+    let role = await this.databaseService.user.findUnique({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        role: true,
+      },
+    });
+    if (role.role.name === 'admin') {
+      query = await this.databaseService.board.findMany({
+        where: {
+          isDeleted: false,
+        },
+        select: field,
+      });
+    } else {
+      query = await this.databaseService.board.findMany({
+        where: {
+          isDeleted: false,
+          peopleInvolved: {
+            some: {
+              userId: id,
+            },
+          },
+        },
+        select: field,
+      });
+    }
+    console.log(JSON.stringify(query));
+    return query;
   }
 
   async findById(id: number) {
@@ -102,12 +108,15 @@ export class BoardService {
           isDeleted: false,
         },
         select: {
+          id: true,
+          name: true,
           peopleInvolved: {
             select: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  image: true
                 },
               },
             },
@@ -167,10 +176,10 @@ export class BoardService {
         },
       });
       return {
-        status : 200,
-        message : "success",
-        data : involved
-      }
+        status: 200,
+        message: 'success',
+        data: involved,
+      };
     } catch (error) {}
   }
 
@@ -211,3 +220,63 @@ export class BoardService {
     });
   }
 }
+
+/*
+
+  async findAll() {
+    return await this.databaseService.board.findMany({
+      where: {
+        isDeleted: false,
+        peopleInvolved : {
+          some : {
+            userId : 10
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        // peopleInvolved: {
+        //   select: {
+        //     user: {
+        //       select: {
+        //         id: true,
+        //         name: true,
+        //         BoardsInvolved: true,
+        //       },
+        //     },
+        //   },
+        // },
+        // list: {
+        //   where: {
+        //     isDeleted: false,
+        //   },
+        //   select: {
+        //     id: true,
+        //     name: true,
+        //     createdAt: true,
+        //     updatedAt: true,
+        //     card: {
+        //       where: {
+        //         isDeleted: false,
+        //       },
+        //       select: {
+        //         id: true,
+        //         name: true,
+        //         description: true,
+        //         image: true,
+        //         code: true,
+        //         createdAt: true,
+        //         updatedAt: true,
+        //       },
+        //     },
+        //   },
+        // },
+      },
+    });
+  }
+
+*/

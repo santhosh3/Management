@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { AuthDto } from './dto/auth.dto';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -13,19 +13,25 @@ export class AuthService {
 
   async login(dto: AuthDto) {
     const { email, password } = dto;
-
+    console.log(email,password);
     const foundUser = await this.databaseService.user.findUnique({
       where: { email }
     });
-
+  
     if (!foundUser) {
-      throw new BadRequestException('Wrong credentials');
+      throw new BadRequestException('Email not found');
     }
 
-    const isMatch = await argon2.verify(foundUser.password, password);
+    if(foundUser.isDeleted === true){
+       throw new BadRequestException('Inactive User');
+    }
+
+
+   const isMatch =  await bcrypt.compare(password, foundUser.password);
+   console.log(password,foundUser.password)
 
     if (!isMatch) {
-      throw new BadRequestException('Wrong credentials');
+      throw new BadRequestException('Password is Wrong');
     }
 
     const token = this.jwt.sign({id:foundUser.id});

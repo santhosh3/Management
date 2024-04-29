@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -11,9 +12,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { MyLoggerModule } from './my-logger/my-logger.module';
 import { AuthModule } from './auth/auth.module';
+import { TaskModule } from './task/task.module';
+import { EffortModule } from './effort/effort.module';
+import config from './config/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      cache: true,
+      load: [config],
+    }),
     DatabaseModule,
     BoardModule,
     ListModule,
@@ -34,6 +42,8 @@ import { AuthModule } from './auth/auth.module';
     ]),
     MyLoggerModule,
     AuthModule,
+    TaskModule,
+    EffortModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,7 +6,7 @@ import { DatabaseService } from 'src/database/database.service';
 export class CardService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(file: string, createCardDto: Prisma.CardsCreateInput) {
+  async create(file: string, createCardDto: Prisma.CardsCreateInput, host: string, port: string) {
     let fields = {
       id: true,
       name: true,
@@ -65,16 +65,22 @@ export class CardService {
           name: true,
         },
       },
-    }
-    if (file === null) {
-      return await this.databaseService.cards.create({
-        data: createCardDto,
-        select: fields
-      });
-    }
+    };
     return await this.databaseService.cards.create({
-      data: { ...createCardDto, image: `http://localhost:3002/${file}` },
+      data: {
+        ...createCardDto,
+        image: file !== null ? `http://${host}:${port}/${file}` : null,
+      },
       select: fields,
+    });
+  }
+
+  async findAll() {
+    return await this.databaseService.cards.findMany({
+      where: {
+        isDeleted: false
+      },
+      select: { id: true, name: true },
     });
   }
 
@@ -90,6 +96,8 @@ export class CardService {
     id: number,
     updateCardDto: Prisma.CardsUpdateInput,
     file: string,
+    host: string,
+    port: string
   ) {
     let fields = {
       id: true,
@@ -149,21 +157,15 @@ export class CardService {
           name: true,
         },
       },
-    }
-    if (file === null) {
-      return await this.databaseService.cards.update({
-        where: {
-          id,
-        },
-        data: updateCardDto,
-        select: fields,
-      });
-    }
+    };
     return await this.databaseService.cards.update({
       where: {
         id,
       },
-      data: { ...updateCardDto, image: `http://localhost:3002/${file}` },
+      data: {
+        ...updateCardDto,
+        image: file !== null ? `http://${host}:${port}/${file}` : null,
+      },
       select: fields,
     });
   }

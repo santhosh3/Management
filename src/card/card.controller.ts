@@ -18,10 +18,17 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
+@ApiTags('Card')
+@ApiBearerAuth('token')
 @Controller('card')
 export class CardController {
-  constructor(private readonly cardService: CardService) {}
+  constructor(
+    private readonly cardService: CardService,
+    private configService: ConfigService,
+  ) {}
 
   @UseGuards(AuthenticationGuard)
   @Post()
@@ -38,7 +45,7 @@ export class CardController {
     }),
   )
   create(
-    @Req() {user},
+    @Req() { user },
     @UploadedFile() file: Express.Multer.File,
     @Body() createCardDto: Prisma.CardsCreateInput,
   ) {
@@ -46,25 +53,58 @@ export class CardController {
       ...createCardDto,
       listId: Number(createCardDto['listId']),
       userId: user.id,
-      ...(createCardDto['assignedById'] && { assignedById: Number(createCardDto['assignedById'])}),  
-      ...(createCardDto['assignedToId'] && { assignedToId: Number(createCardDto['assignedToId'])}),
-      ...(createCardDto['closedById'] && { closedById: Number(createCardDto['closedById'])}),    
-      ...(createCardDto['createdById'] && { createdById: Number(createCardDto['createdById'])}),    
-      ...(createCardDto['finishedById'] && { finishedById: Number(createCardDto['finishedById'])}),    
-      ...(createCardDto['issueType'] && { issueType: Number(createCardDto['issueType'])}),
-      ...(createCardDto['priority'] && { priority: Number(createCardDto['priority'])}),         
+      ...(createCardDto['assignedById'] && {
+        assignedById: Number(createCardDto['assignedById']),
+      }),
+      ...(createCardDto['assignedToId'] && {
+        assignedToId: Number(createCardDto['assignedToId']),
+      }),
+      ...(createCardDto['closedById'] && {
+        closedById: Number(createCardDto['closedById']),
+      }),
+      ...(createCardDto['createdById'] && {
+        createdById: Number(createCardDto['createdById']),
+      }),
+      ...(createCardDto['finishedById'] && {
+        finishedById: Number(createCardDto['finishedById']),
+      }),
+      ...(createCardDto['issueType'] && {
+        issueType: Number(createCardDto['issueType']),
+      }),
+      ...(createCardDto['priority'] && {
+        priority: Number(createCardDto['priority']),
+      }),
     };
-    if (file) {
-      return this.cardService.create(file.filename, object);
-    }
-    return this.cardService.create(null, object);
+    const host: string = this.configService.get('host');
+    const port: string = this.configService.get('port');
+    const filename = file ? file.filename : null;
+    return this.cardService.create(filename, object, host, port);
   }
 
+  @UseGuards(AuthenticationGuard)
+  @Get()
+  findAll() {
+    return this.cardService.findAll();
+  }
+
+  @ApiParam({
+    name: 'id',
+    type: 'integer',
+    description: 'enter unique id',
+    required: true,
+  })
+  @UseGuards(AuthenticationGuard)
   @Get(':id')
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.cardService.findById(id);
   }
 
+  @ApiParam({
+    name: 'id',
+    type: 'integer',
+    description: 'enter unique id',
+    required: true,
+  })
   @UseGuards(AuthenticationGuard)
   @Put(':id')
   @UseInterceptors(
@@ -80,29 +120,52 @@ export class CardController {
     }),
   )
   updateById(
-    @Req() {user},
+    @Req() { user },
     @UploadedFile() file: Express.Multer.File,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateListDto: Prisma.CardsUpdateInput,
   ) {
+    const host: string = this.configService.get('host');
+    const port: string = this.configService.get('port');
     let object = {
       ...updateListDto,
-      ...(updateListDto['listId'] && { listId: Number(updateListDto['listId'])}),  
-      ...({userId: user.id}),  
-      ...(updateListDto['assignedById'] && { assignedById: Number(updateListDto['assignedById'])}),  
-      ...(updateListDto['assignedToId'] && { assignedToId: Number(updateListDto['assignedToId'])}),
-      ...(updateListDto['closedById'] && { closedById: Number(updateListDto['closedById'])}),    
-      ...(updateListDto['createdById'] && { createdById: Number(updateListDto['createdById'])}),    
-      ...(updateListDto['finishedById'] && { finishedById: Number(updateListDto['finishedById'])}),    
-      ...(updateListDto['issueType'] && { issueType: Number(updateListDto['issueType'])}),   
-      ...(updateListDto['priority'] && { priority: Number(updateListDto['priority'])}),     
+      ...(updateListDto['listId'] && {
+        listId: Number(updateListDto['listId']),
+      }),
+      ...{ userId: user.id },
+      ...(updateListDto['assignedById'] && {
+        assignedById: Number(updateListDto['assignedById']),
+      }),
+      ...(updateListDto['assignedToId'] && {
+        assignedToId: Number(updateListDto['assignedToId']),
+      }),
+      ...(updateListDto['closedById'] && {
+        closedById: Number(updateListDto['closedById']),
+      }),
+      ...(updateListDto['createdById'] && {
+        createdById: Number(updateListDto['createdById']),
+      }),
+      ...(updateListDto['finishedById'] && {
+        finishedById: Number(updateListDto['finishedById']),
+      }),
+      ...(updateListDto['issueType'] && {
+        issueType: Number(updateListDto['issueType']),
+      }),
+      ...(updateListDto['priority'] && {
+        priority: Number(updateListDto['priority']),
+      }),
     };
-    if (file) {
-      return this.cardService.updateById(id, object, file.filename);
-    }
-    return this.cardService.updateById(id, object, null);
+    const filename = file ? file.filename : null;
+    return this.cardService.updateById(id, object, filename, host, port);
   }
 
+  @ApiParam({
+    name: 'id',
+    type: 'integer',
+    description: 'enter unique id',
+    required: true,
+  })
+  @UseGuards(AuthenticationGuard)
   @Delete(':id')
   deleteById(@Param('id', ParseIntPipe) id: number) {
     return this.cardService.deleteById(id);

@@ -7,13 +7,18 @@ import * as bcrypt from 'bcryptjs';
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(file: string, createUserDto: Prisma.UserCreateInput, host:string, port:string) {
+  async create(
+    file: string,
+    createUserDto: Prisma.UserCreateInput,
+    host: string,
+    port: string,
+  ) {
     let fields = {
       id: true,
       name: true,
       email: true,
       image: true,
-      role: true,
+      roleId: true,
       code: true,
       createdAt: true,
       updatedAt: true,
@@ -40,7 +45,7 @@ export class UserService {
   }
 
   async findAll() {
-    return await this.databaseService.user.findMany({
+    let result = await this.databaseService.user.findMany({
       where: {
         isDeleted: false,
       },
@@ -49,7 +54,7 @@ export class UserService {
         name: true,
         email: true,
         image: true,
-        role: true,
+        roleId: true,
         code: true,
         createdAt: true,
         updatedAt: true,
@@ -65,6 +70,10 @@ export class UserService {
         },
       },
     });
+    return result.map((item: any, index: number) => ({
+      ...item,
+      BoardsInvolved: item['BoardsInvolved'].map((x: any) => x['board']),
+    }));
   }
 
   async getById(id: number) {
@@ -93,7 +102,7 @@ export class UserService {
     updateUserDto: Prisma.UserUpdateInput,
     file: string,
     host: string,
-    port: string
+    port: string,
   ) {
     let fields = {
       id: true,
@@ -147,6 +156,7 @@ export class UserService {
         where: { id },
         select: { name: true, BoardsInvolved: { select: { boardId: true } } },
       });
+
       const currentProjectIds = (
         await data.then((res) => res.BoardsInvolved)
       ).map((project) => project.boardId);
@@ -179,19 +189,31 @@ export class UserService {
           name: true,
           email: true,
           image: true,
-          role: true,
+          roleId: true,
           code: true,
           createdAt: true,
           updatedAt: true,
           BoardsInvolved: {
-            select: { board: { select: { id: true, name: true } } },
+            select: {
+              board: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
           },
         },
       });
       return {
         status: 200,
         message: 'success',
-        data: involved,
+        data: {
+          ...involved,
+          BoardsInvolved: involved['BoardsInvolved'].map(
+            (x: any) => x['board'],
+          ),
+        },
       };
     } catch (error) {
       return {

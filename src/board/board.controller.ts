@@ -21,7 +21,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
-import { ListService } from 'src/list/list.service';
 import { ConfigService } from '@nestjs/config';
 import {
   ApiBearerAuth,
@@ -38,7 +37,6 @@ import {
 export class BoardController {
   constructor(
     private readonly boardService: BoardService,
-    private readonly listService: ListService,
     private configService: ConfigService,
   ) {}
   private readonly logger = new MyLoggerService(BoardController.name);
@@ -93,10 +91,10 @@ export class BoardController {
   }
 
   @ApiOperation({ summary: 'get All Projects' })
-  @UseGuards(AuthenticationGuard)
+  //@UseGuards(AuthenticationGuard)
   @Get()
-  findAll(@Req() { user }, @Ip() ip: string) {
-    return this.boardService.findAll(user.id);
+  findAll(@Ip() ip: string) {
+    return this.boardService.findAll(2);
   }
 
   @ApiOperation({ summary: 'get projects for login User' })
@@ -120,10 +118,6 @@ export class BoardController {
     return this.boardService.updateById(id, updateBoardDto);
   }
 
-  @Delete(':id')
-  deleteById(@Param('id', ParseIntPipe) id: number) {
-    return this.boardService.deleteById(id);
-  }
 }
 
 //this.logger.log(`Request for All Boards\t${ip}`, BoardController.name);

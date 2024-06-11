@@ -91,7 +91,7 @@ export class UserController {
     return this.userService.deleteById(id);
   }
 
-  @Post(':id')
+  @Put('project/:id')
   AddProjectToUser(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: Prisma.UserUpdateInput,

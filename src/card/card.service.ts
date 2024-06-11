@@ -6,7 +6,17 @@ import { DatabaseService } from 'src/database/database.service';
 export class CardService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(file: string, createCardDto: Prisma.CardsCreateInput, host: string, port: string) {
+  async findList() {
+    const Liststatus = await this.databaseService.list.findMany({});
+    return Liststatus;
+  }
+
+  async create(
+    file: string,
+    createCardDto: Prisma.CardsCreateInput,
+    host: string,
+    port: string,
+  ) {
     let fields = {
       id: true,
       name: true,
@@ -15,7 +25,7 @@ export class CardService {
       updatedAt: true,
       description: true,
       image: true,
-      listId: true,
+      status: true,
       issueType: true,
       priority: true,
       startDate: true,
@@ -66,30 +76,172 @@ export class CardService {
         },
       },
     };
-    return await this.databaseService.cards.create({
+    const story = await this.databaseService.cards.create({
       data: {
         ...createCardDto,
         image: file !== null ? `http://${host}:${port}/${file}` : null,
       },
       select: fields,
     });
+    return story;
   }
 
   async findAll() {
-    return await this.databaseService.cards.findMany({
-      where: {
-        isDeleted: false
+    let fields = {
+      id: true,
+      name: true,
+      boardId: true,
+      code: true,
+      createdAt: true,
+      updatedAt: true,
+      description: true,
+      image: true,
+      status: true,
+      issueType: true,
+      priority: true,
+      startDate: true,
+      endDate: true,
+      createdBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
       },
-      select: { id: true, name: true },
+      closedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      assignedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      assignedTo: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      finishedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    };
+
+    function groupByStatus(array: any): any {
+      const groupedByStatus = {};
+      array.forEach((obj: any) => {
+        const status = obj.status;
+        if (!groupedByStatus[status]) {
+          groupedByStatus[status] = [];
+        }
+        groupedByStatus[status].push(obj);
+      });
+      return groupedByStatus;
+    }
+
+    let stories = await this.databaseService.cards.findMany({
+      where: {
+        isDeleted: false,
+      },
+      select: {
+        ...fields,
+      },
     });
+
+    return stories;
   }
 
   async findById(id: number) {
-    return await this.databaseService.cards.findUnique({
+    let fields = {
+      id: true,
+      name: true,
+      boardId: true,
+      code: true,
+      createdAt: true,
+      updatedAt: true,
+      description: true,
+      image: true,
+      status: true,
+      issueType: true,
+      priority: true,
+      startDate: true,
+      endDate: true,
+      createdBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      closedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      assignedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      assignedTo: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      finishedBy: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    };
+    let cards = await this.databaseService.board.findUnique({
       where: {
         id,
       },
+      select: {
+        cards: true,
+      },
     });
+    return cards.cards;
   }
 
   async updateById(
@@ -97,7 +249,7 @@ export class CardService {
     updateCardDto: Prisma.CardsUpdateInput,
     file: string,
     host: string,
-    port: string
+    port: string,
   ) {
     let fields = {
       id: true,

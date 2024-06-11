@@ -4,7 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { BoardModule } from './board/board.module';
-import { ListModule } from './list/list.module';
+// import { ListModule } from './list/list.module';
 import { CardModule } from './card/card.module';
 import { UserModule } from './user/user.module';
 import { RoleModule } from './role/role.module';
@@ -24,22 +24,22 @@ import config from './config/config';
     }),
     DatabaseModule,
     BoardModule,
-    ListModule,
+    // ListModule,
     CardModule,
     UserModule,
     RoleModule,
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1000,
-        limit: 3,
-      },
-      {
-        name: 'long',
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     name: 'short',
+    //     ttl: 1000,
+    //     limit: 3,
+    //   },
+    //   {
+    //     name: 'long',
+    //     ttl: 60000,
+    //     limit: 100,
+    //   },
+    // ]),
     MyLoggerModule,
     AuthModule,
     TaskModule,
@@ -48,10 +48,10 @@ import config from './config/config';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard,
+    // },
   ],
 })
 export class AppModule {}

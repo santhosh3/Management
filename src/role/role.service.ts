@@ -9,6 +9,24 @@ export class RoleService {
   async create(createRoleDto: Prisma.RoleCreateInput) {
     return await this.databaseService.role.create({
       data: createRoleDto,
+      select: {
+        id: true,
+        name: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
+        users: {
+          where: {
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     });
   }
 

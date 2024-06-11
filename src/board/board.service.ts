@@ -47,16 +47,16 @@ export class BoardService {
       id: true,
       name: true,
       image: true,
-      // peopleInvolved: {
-      //   select: {
-      //     user: {
-      //       select: {
-      //         id: true,
-      //         name: true,
-      //       },
-      //     },
-      //   },
-      // },
+      peopleInvolved: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
       createdAt: true,
       updatedAt: true,
     };
@@ -89,8 +89,10 @@ export class BoardService {
         select: field,
       });
     }
-    console.log(JSON.stringify(query));
-    return query;
+    return query.map((project: any) => ({
+      ...project,
+      peopleInvolved: project['peopleInvolved'].map((x: any) => x['user']),
+    }));
   }
 
   async findById(id: number) {
@@ -116,7 +118,7 @@ export class BoardService {
                 select: {
                   id: true,
                   name: true,
-                  image: true
+                  image: true,
                 },
               },
             },
@@ -170,54 +172,22 @@ export class BoardService {
           },
         },
         select: {
+          id: true,
+          name: true,
           peopleInvolved: {
-            select: { user: { select: { id: true, name: true } } },
+            select: { user: { select: { id: true, name: true, image: true } } },
           },
         },
       });
       return {
         status: 200,
         message: 'success',
-        data: involved,
+        data: {
+          ...involved,
+          peopleInvolved: involved['peopleInvolved'].map((x: any) => x['user']),
+        },
       };
     } catch (error) {}
-  }
-
-  async deleteById(id: number) {
-    let listIds = await this.databaseService.list.findMany({
-      where: {
-        boardId: id,
-      },
-    });
-    listIds.map(
-      async (item) =>
-        await this.databaseService.cards.updateMany({
-          where: {
-            listId: item['id'],
-          },
-          data: {
-            isDeleted: true,
-          },
-        }),
-    );
-    return await this.databaseService.board.update({
-      where: {
-        id,
-      },
-      data: {
-        isDeleted: true,
-        list: {
-          updateMany: {
-            where: {
-              boardId: id,
-            },
-            data: {
-              isDeleted: true,
-            },
-          },
-        },
-      },
-    });
   }
 }
 

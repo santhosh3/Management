@@ -51,7 +51,7 @@ export class CardController {
   ) {
     let object = {
       ...createCardDto,
-      listId: Number(createCardDto['listId']),
+      boardId: Number(createCardDto['boardId']),
       userId: user.id,
       ...(createCardDto['assignedById'] && {
         assignedById: Number(createCardDto['assignedById']),
@@ -85,6 +85,12 @@ export class CardController {
   @Get()
   findAll() {
     return this.cardService.findAll();
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Get('/list')
+  findAllLists() {
+    return this.cardService.findList();
   }
 
   @ApiParam({

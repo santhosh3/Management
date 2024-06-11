@@ -91,7 +91,9 @@ export class TaskService {
     };
   }
 
-  async updateTaskById() {}
+  async updateTaskById() {
+
+  }
 
   async deleteTaskById(id: number) {
     try {
@@ -103,6 +105,9 @@ export class TaskService {
         data: {
           isDeleted: true,
         },
+        select : {
+          id : true
+        }
       });
     } catch (error) {
       return error;
@@ -123,6 +128,7 @@ export class TaskService {
             name: true,
           },
         },
+        
         createdBy: {
           select: {
             id: true,
@@ -153,6 +159,7 @@ export class TaskService {
             name: true,
           },
         },
+        effort: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -192,77 +199,77 @@ export class TaskService {
           },
         },
       },
-      select: {
-        id: true,
-        name: true,
-        list: {
-          select: {
-            id: true,
-            name: true,
-            card: {
-              select: {
-                id: true,
-                name: true,
-                task: {
-                  where: {
-                    isDeleted: false,
-                  },
-                  select: {
-                    id: true,
-                    name: true,
-                    image: true,
-                    description: true,
-                    estimatedTime: true,
-                    effort: {
-                      select: {
-                        costTime: true,
-                      },
-                    },
-                    Card: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    createdBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    assignedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    assignedTo: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    finishedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    closedBy: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
-                    },
-                    createdAt: true,
-                    updatedAt: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      // select: {
+      //   id: true,
+      //   name: true,
+      //   list: {
+      //     select: {
+      //       id: true,
+      //       name: true,
+      //       card: {
+      //         select: {
+      //           id: true,
+      //           name: true,
+      //           task: {
+      //             where: {
+      //               isDeleted: false,
+      //             },
+      //             select: {
+      //               id: true,
+      //               name: true,
+      //               image: true,
+      //               description: true,
+      //               estimatedTime: true,
+      //               effort: {
+      //                 select: {
+      //                   costTime: true,
+      //                 },
+      //               },
+      //               Card: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               createdBy: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               assignedBy: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               assignedTo: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               finishedBy: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               closedBy: {
+      //                 select: {
+      //                   id: true,
+      //                   name: true,
+      //                 },
+      //               },
+      //               createdAt: true,
+      //               updatedAt: true,
+      //             },
+      //           },
+      //         },
+      //       },
+      //     },
+      //   },
+      // },
     });
 
     return result
